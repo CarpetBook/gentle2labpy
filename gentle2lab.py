@@ -1,32 +1,7 @@
 import json
 import argparse
 
-unkReplace = True
-# false = no replace, <unk>/<oov> label
-# true = replace with unk/oov word
-
-notFoundReplace = True
-# false = "not-found-in-audio" words are labeled as "?"
-# true = "not-found-in-audio" words are labeled as the missing word
-
-# floatTime = False
-# // this is deprecated already because uhhh no //
-# false = label timestamps are nanoseconds
-# true = label timestamps are seconds, two decimal places
-# (gentle will only align to two decimal places of precision, more decimals are unnecessary)
-
-includeBIE = False
-# false = no B, I, E markers
-# true = leaves "_B", "_I", and "_E" on the end of labels to mark beginning, intermediate, and ending of words
-
-neatNumbers = True
-# round times to two decimal places in lab file
-# stops 5.01 from looking like 5.00999999999999999 or 5.01000000000000001
-
-filey = None
-lines = None
-
-def convertFiles(fileys):
+def convertFiles(fileys, unkreplace=True, neat=True, bie=False, noreplace=True):
     for f in fileys:
         try:
             with open(f) as filey:
@@ -45,32 +20,43 @@ def convertFiles(fileys):
                             st = totalOff
                             en = totalOff + p["duration"]
                             res = p["phone"]
-                            if neatNumbers:
+
+                            if neat:
                                 st = round(st, 2)
                                 en = round(en, 2)
-                            if not includeBIE:
+
+                            if not bie:
                                 res = p["phone"].split("_")[0] # remove _B, _I, _E
+
+                            if word["alignedWord"] == "<unk>" and not unkreplace:
+                                res = word["word"]
+
                             res = ( res, st, en )
                             lablines.append(res)
                             totalOff = en # add duration to next starting time
                         continue
 
-                if notFoundReplace: res = word["word"]
+                if noreplace: res = word["word"]
                 else: res = "?"
 
                 st = lablines[ len(lablines)-1 ][2] # unmatched word start matches last line's ending time
                 en = st + 0.01
-                if neatNumbers:
+                if neat:
                     st = round(st, 2)
                     en = round(en, 2)
+
                 res = ( res, st, en )
                 lablines.append(res)
+
+            # get rid of file extension on filename
+            f = f.split(".")[:-1][0]
 
             # print lab lines to a file
             with open(str(f) + ".lab", "w") as out:
                 for line in lablines:
                     mewhen = str(line[1]) + " " + str(line[2]) + " " + line[0]
                     print(mewhen, file=out)
+
             print("Wrote " + str(len(lablines)) + " labels to " + str(f) + ".lab")
 
         except FileNotFoundError as fe:
@@ -84,11 +70,6 @@ def convertFiles(fileys):
             print(e)
 
 def main():
-    global unkReplace
-    global notFoundReplace
-    global includeBIE
-    global neatNumbers
-
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -121,11 +102,7 @@ def main():
     )
     
     args = parser.parse_args()
-    unkReplace = args.unk
-    notFoundReplace = args.noreplace
-    includeBIE = args.bie
-    neatNumbers = args.messy
-    convertFiles(args.file)
+    convertFiles(args.file, args.unk, args.messy, args.bie, args.noreplace)
 
 if __name__ == "__main__":
     main()
