@@ -28,7 +28,7 @@ def convertFiles(fileys, unkreplace=True, neat=True, bie=False, noreplace=True):
                             if not bie:
                                 res = p["phone"].split("_")[0] # remove _B, _I, _E
 
-                            if word["alignedWord"] == "<unk>" and not unkreplace:
+                            if unkreplace and word["alignedWord"] == "<unk>":
                                 res = word["word"]
 
                             res = ( res, st, en )
