@@ -1,6 +1,7 @@
 import json
 import argparse
 
+
 def convertFiles(fileys, unkreplace=True, neat=True, bie=False, noreplace=True):
     for f in fileys:
         try:
@@ -13,7 +14,7 @@ def convertFiles(fileys, unkreplace=True, neat=True, bie=False, noreplace=True):
                     word = lines["words"][x] # word object
 
                     res = "" # will be aligned phone or unaligned word
-                    
+
                     if word["case"] != "not-found-in-audio":
                         totalOff = word["start"] # word offset used for relative phone starting time
                         for p in word["phones"]:
@@ -69,6 +70,7 @@ def convertFiles(fileys, unkreplace=True, neat=True, bie=False, noreplace=True):
             print("Oops! Something went wrong. Please see error below for details.")
             print(e)
 
+
 def main():
     parser = argparse.ArgumentParser()
 
@@ -100,7 +102,7 @@ def main():
         action="store_false",
         help="do not round timestamps"
     )
-    
+
     args = parser.parse_args()
     convertFiles(args.file, args.unk, args.messy, args.bie, args.noreplace)
 
